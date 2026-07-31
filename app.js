@@ -1,21 +1,22 @@
-// Green Rising Barbados - Config & Interactivity Script
-
-// Paste your deployed Google Apps Script Web App URL here to connect the registration form to a Google Sheet:
-const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw7_Ferq7x7ULlFjHsOwSTihGYAU_qPqlPMzBKnEhT_J2hNxy5B70wNM3OqHiiEhyY5/exec'; 
+// Green Rising Barbados — Main App Entry Point & Orchestrator
 
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     initNavigation();
     initMobileMenu();
     initProgrammeSubTabs();
     initVillageTabs();
+    if (typeof initResourcesHub === 'function') initResourcesHub();
+    if (typeof initImpactMetrics === 'function') initImpactMetrics();
+    if (typeof initSchedulesModule === 'function') initSchedulesModule();
+    if (typeof initAdminTabsModules === 'function') initAdminTabsModules();
     initHashRouter();
     initScrollReveal();
     initRippleEffect();
 });
 
-// --- Organic/Fluid: Scroll-triggered reveal animations ---
+// Scroll-triggered reveal animations
 function initScrollReveal() {
-    // Add reveal class to key elements
     const revealTargets = [
         { selector: '.program-card',         delay: true },
         { selector: '.home-impact-brief',    delay: false },
@@ -23,6 +24,7 @@ function initScrollReveal() {
         { selector: '.glass',                delay: false },
         { selector: '.pinelands-card',       delay: true },
         { selector: '.matrix-item',          delay: true },
+        { selector: '.resource-card',        delay: true },
         { selector: '.wave-divider',         delay: false },
     ];
 
@@ -44,7 +46,7 @@ function initScrollReveal() {
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
 
-// --- Organic/Fluid: Liquid ripple on button clicks ---
+// Liquid ripple on button clicks
 function initRippleEffect() {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.btn');
@@ -62,91 +64,9 @@ function initRippleEffect() {
     });
 }
 
-// --- 1. SPA Navigation & Router ---
-const views = document.querySelectorAll('.app-view');
-const navLinks = document.querySelectorAll('.nav-link');
-
-function initNavigation() {
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            const tabId = link.getAttribute('data-tab');
-            if (tabId) {
-                // If it's a link to a main tab view
-                e.preventDefault();
-                switchView(tabId);
-                window.location.hash = tabId;
-            }
-        });
-    });
-}
-
-function switchView(viewId) {
-    views.forEach(view => {
-        if (view.id === `view-${viewId}`) {
-            view.classList.add('active');
-        } else {
-            view.classList.remove('active');
-        }
-    });
-
-    navLinks.forEach(link => {
-        if (link.getAttribute('data-tab') === viewId) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
-
-    // Scroll to top of content
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Router using hash location
-function initHashRouter() {
-    const handleHash = () => {
-        const hash = window.location.hash.substring(1);
-        if (hash) {
-            // Check if it's a focus area program
-            if (['water', 'cyen', 'ecovillage', 'yots', 'pinelands'].includes(hash)) {
-                switchView('programmes');
-                openProgram(hash);
-            } else if (['home', 'programmes', 'dashboard', 'quiz', 'apply'].includes(hash)) {
-                switchView(hash);
-            }
-        }
-    };
-    
-    window.addEventListener('hashchange', handleHash);
-    // Initial check on load
-    handleHash();
-}
-
-// Mobile navigation hamburger toggle
-function initMobileMenu() {
-    const mobileBtn = document.getElementById('mobile-toggle-btn');
-    const mainNav = document.getElementById('main-navigation');
-    
-    if (mobileBtn && mainNav) {
-        mobileBtn.addEventListener('click', () => {
-            mainNav.classList.toggle('active');
-            mobileBtn.classList.toggle('open');
-        });
-        
-        // Close menu on click of nav link
-        mainNav.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                mainNav.classList.remove('active');
-                mobileBtn.classList.remove('open');
-            });
-        });
-    }
-}
-
-// --- 2. Programmes Sub-Tabs Switching ---
-const subTabButtons = document.querySelectorAll('.sub-tab-btn');
-const programPanes = document.querySelectorAll('.prog-detail-pane');
-
+// Programmes Sub-Tabs Switching Helper
 function initProgrammeSubTabs() {
+    const subTabButtons = document.querySelectorAll('.sub-tab-btn');
     subTabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const targetProg = btn.getAttribute('data-prog');
@@ -156,6 +76,9 @@ function initProgrammeSubTabs() {
 }
 
 function openProgram(progId) {
+    const subTabButtons = document.querySelectorAll('.sub-tab-btn');
+    const programPanes = document.querySelectorAll('.prog-detail-pane');
+
     subTabButtons.forEach(btn => {
         if (btn.getAttribute('data-prog') === progId) {
             btn.classList.add('active');
@@ -175,11 +98,11 @@ function openProgram(progId) {
     switchView('programmes');
 }
 
-// --- 3. Eco Village Zonal Tab Switching ---
-const villageTabButtons = document.querySelectorAll('.village-tab-btn');
-const villageZones = document.querySelectorAll('.village-zone-pane');
-
+// Eco Village Zonal Tab Switching Helper
 function initVillageTabs() {
+    const villageTabButtons = document.querySelectorAll('.village-tab-btn');
+    const villageZones = document.querySelectorAll('.village-zone-pane');
+
     villageTabButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             const zoneId = btn.getAttribute('data-zone');
@@ -198,7 +121,7 @@ function initVillageTabs() {
     });
 }
 
-// Accordion toggle helper (used in CYEN Skills section)
+// Accordion toggle helper
 function toggleAccordion(button) {
     const activeHeader = button.parentElement.parentElement.querySelector('.accordion-header.active');
     if (activeHeader && activeHeader !== button) {
@@ -208,5 +131,5 @@ function toggleAccordion(button) {
     
     button.classList.toggle('active');
     const content = button.nextElementSibling;
-    content.classList.toggle('show');
+    if (content) content.classList.toggle('show');
 }
